@@ -81,4 +81,4 @@ $user = User::select( 'name', 'email', 'contact' )
 
 ### YOU WILL NEED TO CHANGE THE LOGIC OF THE FUNCTION BELOW
 
-`Illuminate\Databases\DB::run()` - We suggest you to create your own class that runs the query with the action provided in the `Return Data list`.# Eloquent-Class
+`Illuminate\Databases\DB::run()` - We suggest you to create your own class that runs the query with the action provided in the `Return Data list`.
