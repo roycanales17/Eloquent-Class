@@ -11,8 +11,8 @@ composer require roy404/eloquent
 The Eloquent class is a database query builder that provides a fluent interface to create SQL queries.
 
 ## Methods
-- `table()`: self: Sets the table for the query.
-- `select()`: self: Adds a column to the select clause.
+- `table()`: Sets the table for the query.
+- `select()`: Adds a column to the select clause.
 - `where()`: Adds a where clause to the query.
 - `orWhere()`: Adds an OR where clause to the query.
 - `orderBy()`: Adds an order by clause to the query.
@@ -50,22 +50,22 @@ However, these functions are not yet fully implemented; you will need to complet
 class User extends Model
 {
     protected string $primary_key = 'id';
-    protected array $fillable = ['id'];
+    protected array $fillable = ['name'];
 }
 
 // Create a new user
 $userId = User::create([
-    'name' => 'robroy'
+    'name' => 'Robroy'
 ]);
 
 // Retrieve a user by ID
 $user = User::find($userId);
 
 // Update a user's record
-User::where( 'name', 'robroy' )->update(['name' => 'robert']);
+User::where( 'name', 'Robroy' )->update(['name' => 'Robert']);
 
 // Delete a user's record
-User::where( 'name', 'robert' )->delete();
+User::where( 'name', 'Robert' )->delete();
 
 // Another Example
 $user = User::select( 'name', 'email', 'contact' )
@@ -77,8 +77,11 @@ $user = User::select( 'name', 'email', 'contact' )
     })
     ->limit( 1 )
     ->row();
+
+// Another Example [2]
+DB::table( 'user' )->select( 'name' )->where( 'id', $userId )->field();    
 ```
 
-### YOU WILL NEED TO CHANGE THE LOGIC OF THE FUNCTION BELOW
+### YOU WILL NEED TO CHANGE THE LOGIC OF THE FUNCTION BELOW:
 
 `Illuminate\Databases\DB::run()` - We suggest you to create your own class that runs the query with the action provided in the `Return Data list`.
