@@ -71,7 +71,7 @@
 			$this->whereCondition = true;
 		}
 		
-		protected function register_binds( string $column, mixed $value, &$temp_col ): void
+		protected function register_binds( string $column, mixed $value, &$temp_col = null ): void
 		{
 			$temp_col = $column;
 			$temp_col = explode( '.', $temp_col );

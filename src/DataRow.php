@@ -34,9 +34,12 @@
 		
 		function update( array $binds )
 		{
-			foreach ( $binds as $key => $value ) {
+			$temp_col = null;
+			foreach ( $binds as $key => $value ) 
+			{
 				$this->register_binds( $key, $value, $temp_col );
-				$this->update_binds[ $temp_col ] = $value;
+				if ( $temp_col )
+					$this->update_binds[ $temp_col ] = $value;
 			}
 			
 			return $this->execute( __FUNCTION__ );
