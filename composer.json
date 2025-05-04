@@ -19,7 +19,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Illuminate\\Databases\\": "src/"
+            "App\\Databases\\Scheme\\": "src/Databases/",
+            "App\\Database\\": "src/"
         }
     }
 }

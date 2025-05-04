@@ -1,6 +1,8 @@
-<?php 
+<?php
 
-    namespace Illuminate\Databases;
+	namespace App\Databases\Scheme;
+
+	use App\Database\DB;
 
 	class Blueprint
     {

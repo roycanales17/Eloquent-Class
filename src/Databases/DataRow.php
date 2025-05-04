@@ -1,6 +1,6 @@
 <?php
-	
-	namespace Illuminate\Databases;
+
+	namespace App\Databases\Scheme;
 	
 	trait DataRow
 	{
