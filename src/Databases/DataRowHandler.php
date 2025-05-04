@@ -22,7 +22,7 @@
 
 		public function lastID(): int {
 			if ($this->driver === 'pdo') {
-				return (int) $this->result->lastInsertId();
+				return (int) $this->object->lastInsertId();
 			} else {
 				return (int) $this->object->insert_id;
 			}
