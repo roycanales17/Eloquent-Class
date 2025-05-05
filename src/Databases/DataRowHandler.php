@@ -2,11 +2,13 @@
 
 	namespace App\Databases\Scheme;
 
+	use PDO;
+
 	trait DataRowHandler
 	{
 		public function fetch(): array {
 			if ($this->driver === 'pdo') {
-				return $this->result->fetch() ?: [];
+				return $this->result->fetchAll(PDO::FETCH_ASSOC) ?: [];
 			} else {
 				return $this->result->fetch_assoc() ?: [];
 			}
@@ -29,14 +31,32 @@
 		}
 
 		function col(): array {
-			return [];
+			$array = [];
+			$keyColumn = null;
+			$data = $this->fetch();
+			foreach ($data[0] ?? [] as $key => $value) {
+				$keyColumn = $key;
+				break;
+			}
+
+			foreach ($data as $row) {
+				$array[] = $row[$keyColumn] ?? null;
+			}
+			return $array;
 		}
 
 		function field(): mixed {
-			return '';
+			$data = $this->fetch();
+			$field = null;
+			foreach ($data[0] ?? [] as $value) {
+				$field = $value;
+				break;
+			}
+			return $field;
 		}
 
 		function row(): array {
-			return [];
+			$data = $this->fetch();
+			return $data[0] ?? [];
 		}
 	}
