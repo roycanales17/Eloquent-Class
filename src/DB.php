@@ -15,20 +15,24 @@
 		private static ?mysqli $mysqli = null;
 		private static array $config = [];
 
-		public static function configure(array $config): void
+		public static function configure(array $config, bool $connect = false): void
 		{
 			// Prevent reconfiguration with the same config
 			if (self::$config === $config && self::$pdo && self::$mysqli)
 				return;
 
 			self::$config = $config;
-
-			self::connectPDO($config);
-			self::connectMySQLi($config);
+			if ($connect) {
+				self::connectPDO($config);
+				self::connectMySQLi($config);
+			}
 		}
 
 		private static function connectPDO(array $config): void
 		{
+			if(self::$pdo)
+				return;
+
 			$driver     = $config['driver'] ?? 'mysql';
 			$host       = $config['host'] ?? '127.0.0.1';
 			$port       = $config['port'] ?? '3306';
@@ -55,6 +59,9 @@
 
 		private static function connectMySQLi(array $config): void
 		{
+			if (self::$mysqli)
+				return;
+
 			$host       = $config['host'] ?? '127.0.0.1';
 			$port       = (int)($config['port'] ?? 3306);
 			$database   = $config['database'] ?? '';
@@ -87,6 +94,8 @@
 		{
 			if (!self::$config)
 				throw new RuntimeException('No configuration provided');
+
+			self::configure(self::$config, true);
 
 			if (!$driver)
 				$driver = empty($params) ? 'mysqli' : 'pdo';
