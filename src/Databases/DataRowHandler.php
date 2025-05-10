@@ -10,7 +10,11 @@
 			if ($this->driver === 'pdo') {
 				return $this->result->fetchAll(PDO::FETCH_ASSOC) ?: [];
 			} else {
-				return $this->result->fetch_assoc() ?: [];
+				$rows = [];
+				while ($row = mysqli_fetch_row($this->result)) {
+					$rows[] = $row;
+				}
+				return $rows;
 			}
 		}
 
