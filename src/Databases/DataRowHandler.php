@@ -11,7 +11,7 @@
 				return $this->result->fetchAll(PDO::FETCH_ASSOC) ?: [];
 			} else {
 				$rows = [];
-				while ($row = mysqli_fetch_row($this->result)) {
+				while ($row = $this->result->fetch_assoc()) {
 					$rows[] = $row;
 				}
 				return $rows;
