@@ -17,14 +17,14 @@
 		{
 			$object = self::object(['primary_key', 'fillable']);
 			$query = new Eloquent();
-			return $query->create($binds, $object->getFillable(), $object->getTable())->lastID();
+			return $query->create($binds, $object->getFillable(), $object->getTable());
 		}
 
 		public static function replace(array $binds): int
 		{
 			$object = self::object(['primary_key', 'fillable']);
 			$query = new Eloquent();
-			return $query->replace($binds, $object->getFillable(), $object->getTable())->lastID();
+			return $query->replace($binds, $object->getFillable(), $object->getTable());
 		}
 
 		public static function find(int $id): array
