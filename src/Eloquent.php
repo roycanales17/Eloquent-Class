@@ -90,8 +90,10 @@
 		function create(array $binds, array $fillable = [], string $table = '')
 		{
 			if ($fillable) self::remove_unfillable($binds, $fillable);
-			if (empty($table)) $table = strtolower($this->table);
+			if (empty($table))
+				$table = $this->table;
 
+			$table = strtolower($table);
 			$columns = array_keys($binds);
 			return db::run(
 				"INSERT INTO `$table` (`" . implode('`, `', $columns) . "`) VALUES (:" . implode(', :', $columns) . ")",
