@@ -146,19 +146,27 @@
 			return $result;
 		}
 
-		protected static function object(array $required=[]):ClassObject
+		protected static function object(array $required = []): ClassObject
 		{
-			$name=get_called_class();
-			$obj=new ClassObject($name);
-			$reflectionClass=new \ReflectionClass($name);
-			foreach($required as $property){
-				if($reflectionClass->hasProperty($property)){
-					$reflectionProperty=$reflectionClass->getProperty($property);
+			static $reflectionCache = [];
+
+			$name = get_called_class();
+			$obj = new ClassObject($name);
+
+			if (!isset($reflectionCache[$name])) {
+				$reflectionCache[$name] = new \ReflectionClass($name);
+			}
+
+			$reflectionClass = $reflectionCache[$name];
+			foreach ($required as $property) {
+				if ($reflectionClass->hasProperty($property)) {
+					$reflectionProperty = $reflectionClass->getProperty($property);
 					$reflectionProperty->setAccessible(true);
-					$value=$reflectionProperty->getValue(new $name);
-					$obj->register($property,$value);
+					$value = $reflectionProperty->getValue(new $name);
+					$obj->register($property, $value);
 				}
 			}
+
 			return $obj;
 		}
 
