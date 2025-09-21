@@ -15,12 +15,15 @@
         }
     ],
     "require": {
-        "php": "^8.0"
+        "php": "^8.1"
     },
     "autoload": {
         "psr-4": {
-            "App\\Databases\\Scheme\\": "src/Databases/",
-            "App\\Database\\": "src/"
+            "App\\Databases\\": "Databases/",
+            "App\\Databases\\Facade\\": "Databases/Facade/",
+            "App\\Databases\\Handler\\": "Databases/Handler/",
+            "App\\Databases\\Handler\\Blueprints\\": "Databases/Handler/Blueprints",
+            "App\\Databases\\Handler\\Eloquent\\": "Databases/Handler/Eloquent"
         }
     }
 }
