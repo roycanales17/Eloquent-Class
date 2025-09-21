@@ -1,118 +1,209 @@
 <?php
 
-    namespace App\Databases\Handler\Eloquent;
+	namespace App\Databases\Handler\Eloquent;
 
-    use App\Databases\Database;
-    use App\Databases\Handler\Blueprints\QueryReturnType;
+	use App\Databases\Database;
+	use App\Databases\Handler\Blueprints\QueryReturnType;
 
-    abstract class Builder extends QueryResults
-    {
-        const EMPTY = '__empty__';
+	/**
+	 * Abstract Builder
+	 *
+	 * Provides a fluent interface for constructing and executing
+	 * SQL queries such as SELECT, UPDATE, DELETE, INSERT, and REPLACE.
+	 *
+	 * This class is meant to be extended by specific query builders
+	 * that define table names and server connections.
+	 */
+	abstract class Builder extends QueryResults
+	{
+		/** Special marker for empty values in queries. */
+		const EMPTY = '__empty__';
 
-        protected string $server;
-        protected string $table = '';
-        protected array $columns = [];
-        protected array $wheres = [];
-        protected array $bindings = [];
-        protected array $orders = [];
-        protected ?int $limit = null;
-        protected ?int $offset = null;
-        protected string $lastSql = '';
-        protected string $query = '';
+		/** @var string Database server connection name */
+		protected string $server;
 
-        protected function buildWhere(): string {
-            if (empty($this->wheres)) {
-                return '';
-            }
+		/** @var string Table name to execute queries on */
+		protected string $table = '';
 
-            $sql = 'WHERE ';
-            $parts = [];
+		/** @var array Columns to be selected in SELECT queries */
+		protected array $columns = [];
 
-            foreach ($this->wheres as $where) {
-                if (($where[0] ?? '') === 'nested') {
-                    $nestedParts = [];
-                    $wheres = $where[1] ?? [];
-                    $boolean = $where[2] ?? '';
-                    foreach ($wheres as [$nExpr, $nType]) {
-                        $nestedParts[] = ($nestedParts ? $nType . ' ' : '') . $nExpr;
-                    }
-                    $expr = '(' . implode(' ', $nestedParts) . ')';
-                    $parts[] = ($parts ? $boolean . ' ' : '') . $expr;
-                } else {
-                    [$expr, $boolean] = $where;
-                    $parts[] = ($parts ? $boolean . ' ' : '') . $expr;
-                }
-            }
+		/** @var array WHERE clause conditions */
+		protected array $wheres = [];
 
-            return $sql . implode(' ', $parts);
-        }
+		/** @var array SET clause data for UPDATE queries */
+		protected array $sets = [];
 
-        public function delete(): mixed
-        {
-            $sql = "DELETE FROM {$this->table} " . $this->buildWhere();
-            return Database::server($this->server)->query($this->lastSql = $sql, $this->bindings)->totalAffected();
-        }
+		/** @var array Bound parameters for prepared statements */
+		protected array $bindings = [];
 
-        public function replace(array $data, array $fillable = [], QueryReturnType $returnType = QueryReturnType::ROW_COUNT): mixed
-        {
-            if (!empty($fillable)) {
-                $data = array_intersect_key($data, array_flip($fillable));
-            }
+		/** @var array ORDER BY clauses */
+		protected array $orders = [];
 
-            $columns = array_keys($data);
-            $placeholders = implode(',', array_map(fn($c) => ":$c", $columns));
-            $sql = "REPLACE INTO {$this->table} (" . implode(',', $columns) . ") VALUES ($placeholders)";
+		/** @var int|null Query limit */
+		protected ?int $limit = null;
 
-            $bindings = [];
-            foreach ($data as $key => $value) {
-                $bindings[":$key"] = $value;
-            }
+		/** @var int|null Query offset */
+		protected ?int $offset = null;
 
-            if ($returnType == QueryReturnType::ROW_COUNT) {
-                return Database::server($this->server)->query($this->lastSql = $sql, $bindings)->totalAffected();
-            }
+		/** @var string The last executed SQL statement */
+		protected string $lastSql = '';
 
-            return Database::server($this->server)->query($this->lastSql, $bindings)->lastInsertedID();
-        }
+		/** @var string Current query being built */
+		protected string $query = '';
 
-        public function create(array $data, array $fillable = []): mixed
-        {
-            if (!empty($fillable)) {
-                $data = array_intersect_key($data, array_flip($fillable));
-            }
+		/**
+		 * Build a WHERE clause from the accumulated conditions.
+		 *
+		 * @return string SQL WHERE clause or empty string if no conditions
+		 */
+		protected function buildWhere(): string {
+			if (empty($this->wheres)) {
+				return '';
+			}
 
-            $columns = array_keys($data);
-            $placeholders = implode(',', array_map(fn($c) => ":$c", $columns));
-            $sql = "INSERT INTO {$this->table} (" . implode(',', $columns) . ") VALUES ($placeholders)";
+			$sql = 'WHERE ';
+			$parts = [];
 
-            $bindings = [];
-            foreach ($data as $key => $value) {
-                $bindings[":$key"] = $value;
-            }
+			foreach ($this->wheres as $where) {
+				if (($where[0] ?? '') === 'nested') {
+					$nestedParts = [];
+					$wheres = $where[1] ?? [];
+					$boolean = $where[2] ?? '';
+					foreach ($wheres as [$nExpr, $nType]) {
+						$nestedParts[] = ($nestedParts ? $nType . ' ' : '') . $nExpr;
+					}
+					$expr = '(' . implode(' ', $nestedParts) . ')';
+					$parts[] = ($parts ? $boolean . ' ' : '') . $expr;
+				} else {
+					[$expr, $boolean] = $where;
+					$parts[] = ($parts ? $boolean . ' ' : '') . $expr;
+				}
+			}
 
-            return Database::server($this->server)->query($this->lastSql = $sql, $bindings)->lastInsertedID();
-        }
+			return $sql . implode(' ', $parts);
+		}
 
-        public function rawSQL(bool $interpolate = true): string {
-            if (empty($this->lastSql)) {
-                $cols = $this->columns ?: ['*'];
-                $sql = "SELECT " . implode(', ', $cols) . " FROM {$this->table} " . $this->buildWhere();
-            } else {
-                $sql = $this->lastSql;
-            }
+		/**
+		 * Execute an UPDATE statement on the current table.
+		 *
+		 * @return int Number of affected rows
+		 */
+		public function update(): mixed
+		{
+			$setClauses = [];
+			foreach ($this->sets as $column => $placeholder) {
+				$setClauses[] = "$column = $placeholder";
+			}
 
-            $raw = $sql;
-            if ($interpolate) {
-                foreach ($this->bindings as $param => $value) {
-                    $quoted = is_numeric($value) ? $value : "'" . addslashes($value) . "'";
-                    if (is_string($param)) {
-                        $raw = str_replace($param, $quoted, $raw);
-                    } else {
-                        $raw = preg_replace('/\?/', $quoted, $raw, 1);
-                    }
-                }
-            }
+			$sql = "UPDATE {$this->table} SET " . implode(', ', $setClauses) . ' ' . $this->buildWhere();
 
-            return $raw;
-        }
-    }
+			return Database::server($this->server)
+				->query($this->lastSql = $sql, $this->bindings)
+				->totalAffected();
+		}
+
+		/**
+		 * Execute a DELETE statement on the current table.
+		 *
+		 * @return int Number of affected rows
+		 */
+		public function delete(): mixed
+		{
+			$sql = "DELETE FROM {$this->table} " . $this->buildWhere();
+
+			return Database::server($this->server)
+				->query($this->lastSql = $sql, $this->bindings)
+				->totalAffected();
+		}
+
+		/**
+		 * Execute a REPLACE INTO statement.
+		 *
+		 * @param array $data Key-value pairs of column => value
+		 * @param array $fillable Optional whitelist of allowed columns
+		 * @param QueryReturnType $returnType What to return (row count or last insert ID)
+		 * @return mixed Row count or last inserted ID
+		 */
+		public function replace(array $data, array $fillable = [], QueryReturnType $returnType = QueryReturnType::ROW_COUNT): mixed
+		{
+			if (!empty($fillable)) {
+				$data = array_intersect_key($data, array_flip($fillable));
+			}
+
+			$columns = array_keys($data);
+			$placeholders = implode(',', array_map(fn($c) => ":$c", $columns));
+			$sql = "REPLACE INTO {$this->table} (" . implode(',', $columns) . ") VALUES ($placeholders)";
+
+			$bindings = [];
+			foreach ($data as $key => $value) {
+				$bindings[":$key"] = $value;
+			}
+
+			if ($returnType == QueryReturnType::ROW_COUNT) {
+				return Database::server($this->server)
+					->query($this->lastSql = $sql, $bindings)
+					->totalAffected();
+			}
+
+			return Database::server($this->server)
+				->query($this->lastSql, $bindings)
+				->lastInsertedID();
+		}
+
+		/**
+		 * Execute an INSERT INTO statement.
+		 *
+		 * @param array $data Key-value pairs of column => value
+		 * @param array $fillable Optional whitelist of allowed columns
+		 * @return int Last inserted ID
+		 */
+		public function create(array $data, array $fillable = []): mixed
+		{
+			if (!empty($fillable)) {
+				$data = array_intersect_key($data, array_flip($fillable));
+			}
+
+			$columns = array_keys($data);
+			$placeholders = implode(',', array_map(fn($c) => ":$c", $columns));
+			$sql = "INSERT INTO {$this->table} (" . implode(',', $columns) . ") VALUES ($placeholders)";
+
+			$bindings = [];
+			foreach ($data as $key => $value) {
+				$bindings[":$key"] = $value;
+			}
+
+			return Database::server($this->server)
+				->query($this->lastSql = $sql, $bindings)
+				->lastInsertedID();
+		}
+
+		/**
+		 * Get the raw SQL string from the current query.
+		 *
+		 * @param bool $interpolate Whether to replace bindings with values
+		 * @return string Raw SQL string
+		 */
+		public function rawSQL(bool $interpolate = true): string {
+			if (empty($this->lastSql)) {
+				$cols = $this->columns ?: ['*'];
+				$sql = "SELECT " . implode(', ', $cols) . " FROM {$this->table} " . $this->buildWhere();
+			} else {
+				$sql = $this->lastSql;
+			}
+
+			$raw = $sql;
+			if ($interpolate) {
+				foreach ($this->bindings as $param => $value) {
+					$quoted = is_numeric($value) ? $value : "'" . addslashes($value) . "'";
+					if (is_string($param)) {
+						$raw = str_replace($param, $quoted, $raw);
+					} else {
+						$raw = preg_replace('/\?/', $quoted, $raw, 1);
+					}
+				}
+			}
+
+			return $raw;
+		}
+	}

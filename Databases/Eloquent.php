@@ -47,6 +47,29 @@
 		}
 
 		/**
+		 * Add a column/value pair for the UPDATE statement.
+		 *
+		 * Example:
+		 * ```php
+		 * $query->table('users')
+		 *       ->set('name', 'John')
+		 *       ->set('email', 'john@example.com');
+		 * ```
+		 *
+		 * @param string $column
+		 * @param mixed $value
+		 * @return $this
+		 */
+		public function set(string $column, mixed $value): self
+		{
+			$this->sets[$column] = '?';
+			$this->bindings[] = $value;
+
+			return $this;
+		}
+
+
+		/**
 		 * Add a WHERE condition to the query.
 		 *
 		 * Supports closures for nested conditions:
