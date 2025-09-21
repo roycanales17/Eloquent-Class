@@ -29,7 +29,7 @@
 			return $this;
 		}
 
-		public function update(): int {
+		public function execute(): int {
 			return $this->eloquent->update();
 		}
 	}
