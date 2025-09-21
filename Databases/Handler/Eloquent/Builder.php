@@ -89,7 +89,7 @@
 		 *
 		 * @return int Number of affected rows
 		 */
-		public function update(): mixed
+		public function update(): int
 		{
 			$setClauses = [];
 			foreach ($this->sets as $column => $placeholder) {

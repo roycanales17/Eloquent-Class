@@ -5,6 +5,7 @@
 	use Closure;
 	use App\Databases\Eloquent;
 	use App\Databases\Handler\MetaData;
+	use App\Databases\Handler\Blueprints\UpdateChain;
 
 	/**
 	 * Base Model class
@@ -143,6 +144,20 @@
 
 			$obj->table(self::baseTable($instance));
 			return $obj->create($values, $instance->fillable);
+		}
+
+		/**
+		 * Start an update query for the model's table.
+		 *
+		 * @param array $values Associative array of column => value pairs to update initially.
+		 *                      More values can be added later via `set()`.
+		 *
+		 * @return UpdateChain Fluent update builder chain for further conditions and execution.
+		 */
+		public static function update(array $values): UpdateChain
+		{
+			$instance = new static();
+			return new UpdateChain(self::baseTable($instance), $values, new Eloquent($instance->server));
 		}
 
 		/**

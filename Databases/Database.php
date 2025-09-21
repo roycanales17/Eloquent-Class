@@ -7,6 +7,7 @@
 	use App\Databases\Handler\Blueprints\QueryReturnType;
 	use App\Databases\Handler\Collection;
 	use App\Databases\Handler\DatabaseException;
+	use App\Databases\Handler\Blueprints\UpdateChain;
 
 	/**
 	 * Class Database
@@ -92,6 +93,26 @@
 			$obj = new Eloquent();
 			$obj->table($table);
 			return $obj->replace($data);
+		}
+
+		/**
+		 * Update rows in the database using a fluent chain builder.
+		 *
+		 * Example:
+		 * ```php
+		 * Database::update('users', ['name' => 'John', 'email' => 'john@example.com'])
+		 *     ->where('id', 1)
+		 *     ->execute();
+		 * ```
+		 *
+		 * @param string $table The table name.
+		 * @param array  $data  Associative array of column => value pairs.
+		 *
+		 * @return UpdateChain Returns an UpdateChain instance for chaining conditions.
+		 */
+		public static function update(string $table, array $data): UpdateChain
+		{
+			return new UpdateChain($table, $data);
 		}
 
 		/**
