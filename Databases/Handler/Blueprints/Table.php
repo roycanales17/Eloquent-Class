@@ -17,9 +17,15 @@
 		/**
 		 * Define an auto-incrementing primary key column.
 		 */
-		public function id(string $name = 'id', int $startingIndex = 0): static
+		public function id(string $name = 'id', int $startingIndex = 0, ?int $length = null): static
 		{
-			$this->columns[$name] = "`{$name}` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY";
+			$column = "`{$name}` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY";
+
+			if ($length) {
+				$column = "`{$name}` INT({$length}) UNSIGNED AUTO_INCREMENT PRIMARY KEY";
+			}
+
+			$this->columns[$name] = $column;
 			$this->lastColumn = $name;
 
 			if ($startingIndex > 0) {
@@ -116,6 +122,28 @@
 			if ($this->lastColumn && isset($this->columns[$this->lastColumn])) {
 				$formatted = is_numeric($value) ? $value : "'{$value}'";
 				$this->columns[$this->lastColumn] .= " DEFAULT {$formatted}";
+			}
+			return $this;
+		}
+
+		/**
+		 * Set DEFAULT CURRENT_TIMESTAMP for the last defined column.
+		 */
+		public function defaultNow(): static
+		{
+			if ($this->lastColumn && isset($this->columns[$this->lastColumn])) {
+				$this->columns[$this->lastColumn] .= " DEFAULT CURRENT_TIMESTAMP";
+			}
+			return $this;
+		}
+
+		/**
+		 * Set ON UPDATE CURRENT_TIMESTAMP for the last defined column.
+		 */
+		public function updateNow(): static
+		{
+			if ($this->lastColumn && isset($this->columns[$this->lastColumn])) {
+				$this->columns[$this->lastColumn] .= " ON UPDATE CURRENT_TIMESTAMP";
 			}
 			return $this;
 		}
