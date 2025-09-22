@@ -95,7 +95,7 @@
 					PDO::ATTR_EMULATE_PREPARES   => false,
 				]);
 			} catch (PDOException $e) {
-				throw new DatabaseException("PDO connection failed: " . $e->getMessage(), (int)$e->getCode(), $e);
+				throw new DatabaseException("PDO connection failed: " . $e->getMessage() . " Configurations: ". print_r( $c, true ), $e->getCode(), $e->getPrevious());
 			}
 		}
 
@@ -108,21 +108,25 @@
 		{
 			$c = self::normalizeConfig($config);
 
-			$object = new mysqli(
-				$c['host'],
-				$c['username'],
-				$c['password'],
-				$c['database'],
-				$c['port'],
-				$c['unixSocket']
-			);
+			try {
+				$object = new mysqli(
+					$c['host'],
+					$c['username'],
+					$c['password'],
+					$c['database'],
+					$c['port'],
+					$c['unixSocket']
+				);
 
-			if ($object->connect_error) {
-				throw new DatabaseException("MySQLi connection failed: " . $object->connect_error);
-			}
+				if ($object->connect_error) {
+					throw new DatabaseException("MySQLi connection failed: " . $object->connect_error);
+				}
 
-			if (!$object->set_charset($c['charset'])) {
-				throw new DatabaseException("Failed to set charset to '{$c['charset']}': " . $object->error);
+				if (!$object->set_charset($c['charset'])) {
+					throw new DatabaseException("Failed to set charset to '{$c['charset']}': " . $object->error);
+				}
+			} catch (mysqli_sql_exception $e) {
+				throw new DatabaseException("MySQLi connection failed: " . $e->getMessage() . " Configurations: ". print_r( $c, true ), (int)$e->getCode(), $e->getPrevious());
 			}
 
 			return $object;
