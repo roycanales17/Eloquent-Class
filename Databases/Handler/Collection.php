@@ -118,7 +118,7 @@
 				return count($this->result);
 			}
 
-			return $this->field();
+			return intval( $this->field() );
 		}
 
 		/**
