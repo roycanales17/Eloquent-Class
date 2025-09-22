@@ -85,6 +85,38 @@
 		}
 
 		/**
+		 * Check if any rows match the current query.
+		 *
+		 * @return bool True if at least one row exists, false otherwise
+		 */
+		public function exists(): bool
+		{
+			$sql = "SELECT 1 FROM {$this->table} " . $this->buildWhere() . " LIMIT 1";
+
+			$result = Database::server($this->server)
+				->query($this->lastSql = $sql, $this->bindings)
+				->count();
+
+			return !empty($result);
+		}
+
+		/**
+		 * Get the total number of rows matching the current query.
+		 *
+		 * @return int Number of matching rows
+		 */
+		public function count(): int
+		{
+			$sql = "SELECT COUNT(*) as total FROM {$this->table} " . $this->buildWhere();
+
+			$row = Database::server($this->server)
+				->query($this->lastSql = $sql, $this->bindings)
+				->field();
+
+			return intval( $row );
+		}
+
+		/**
 		 * Execute an UPDATE statement on the current table.
 		 *
 		 * @return int Number of affected rows
