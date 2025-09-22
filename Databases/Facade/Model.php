@@ -29,7 +29,11 @@
 		 */
 		public static function _(int $id): MetaData
 		{
-			return MetaData::instance($id, self::baseTable());
+			$instance = new static();
+			$primaryKey = $instance->primary_key;
+			$table = self::baseTable($instance);
+
+			return MetaData::instance($id, $table, $primaryKey);
 		}
 
 		/**

@@ -57,15 +57,16 @@
 		/**
 		 * Get (or create) a cached instance for the given table and ID.
 		 *
-		 * @param int    $id    The primary key value.
+		 * @param int $id The primary key value.
 		 * @param string $table The table name.
+		 * @param string $primaryKey
 		 * @return self
 		 */
-		public static function instance(int $id, string $table): self
+		public static function instance(int $id, string $table, string $primaryKey): self
 		{
 			$table = strtolower($table);
 			if (!isset(self::$instance[$table][$id])) {
-				self::$instance[$table][$id] = new self($id, $table);
+				self::$instance[$table][$id] = new self($id, $table, $primaryKey);
 			}
 
 			return self::$instance[$table][$id];
@@ -78,14 +79,15 @@
 		 *
 		 * @param int    $id    The primary key value.
 		 * @param string $table The table name.
+		 * @param string $primaryKey Table primary key.
 		 */
-		private function __construct(int $id, string $table)
+		private function __construct(int $id, string $table, string $primaryKey)
 		{
 			$this->id = $id;
 			$this->table = strtolower($table);
 
 			$data = Database::table($this->table)
-				->where('id', '=', $id)
+				->where($primaryKey, '=', $id)
 				->limit(1)
 				->row();
 
