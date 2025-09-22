@@ -3,9 +3,8 @@
 	namespace App\Databases;
 
 	use App\Databases\Facade\Connections;
-	use App\Databases\Handler\Blueprints\Actions;
+	use App\Databases\Handler\Blueprints\ServerChain;
 	use App\Databases\Handler\Blueprints\QueryReturnType;
-	use App\Databases\Handler\Collection;
 	use App\Databases\Handler\DatabaseException;
 	use App\Databases\Handler\Blueprints\UpdateChain;
 
@@ -43,11 +42,11 @@
 		 *
 		 * @param string $server The server identifier.
 		 *
-		 * @return Actions
+		 * @return ServerChain
 		 */
-		public static function server(string $server): Actions
+		public static function server(string $server): ServerChain
 		{
-			return new Actions($server);
+			return new ServerChain($server);
 		}
 
 		/**

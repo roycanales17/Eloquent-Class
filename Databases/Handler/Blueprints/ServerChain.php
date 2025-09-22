@@ -4,7 +4,7 @@
 
     use App\Databases\Handler\Eloquent\Builder;
 
-    class Actions extends Builder
+    class ServerChain extends Builder
     {
         public
         function __construct(string $server) {
