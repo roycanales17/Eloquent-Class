@@ -70,14 +70,11 @@
 		 * @param array           $params     Bound parameters for prepared statement.
 		 * @param QueryReturnType $returnType The expected return type (e.g., ALL, FIRST, COUNT).
 		 *
-		 * @return array The query result as an array.
+		 * @return mixed The query result.
 		 */
-		public static function query(string $query, array $params = [], QueryReturnType $returnType = QueryReturnType::ALL): array
+		public static function query(string $query, array $params = [], QueryReturnType $returnType = QueryReturnType::ALL): mixed
 		{
-			$data = self::execute(null, $query, $params, $returnType);
-			$obj = new Collection($data);
-
-			return $obj->fetch();
+			return self::execute(null, $query, $params, $returnType);
 		}
 
 		/**
