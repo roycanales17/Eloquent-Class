@@ -117,15 +117,21 @@
 			array $parameters = [],
 			QueryReturnType $returnType = QueryReturnType::ALL
 		): mixed {
-			$driver = Driver::MYSQLI;
-
-			// Switch to PDO if parameters are bound (prepared statement needed).
-			if ($parameters) {
-				$driver = Driver::PDO;
-			}
+			$driver = $parameters ? Driver::PDO : Driver::MYSQLI;
 
 			if (is_string($serverOrInstance) || is_null($serverOrInstance)) {
 				$serverOrInstance = self::instance($serverOrInstance, $driver);
+			}
+
+			if ($returnType === QueryReturnType::ALL) {
+				$type = strtoupper(strtok(trim($query), ' '));
+				$returnType = match ($type) {
+					'INSERT' => QueryReturnType::LAST_INSERT_ID,
+					'UPDATE', 'DELETE' => QueryReturnType::ROW_COUNT,
+					'SELECT', 'SHOW', 'DESCRIBE' => QueryReturnType::ALL,
+					'ALTER', 'DROP', 'RENAME', 'CREATE' => QueryReturnType::ROW_COUNT,
+					default => QueryReturnType::ALL,
+				};
 			}
 
 			return $driver->execute($serverOrInstance, $query, $parameters, $returnType);
