@@ -95,7 +95,7 @@
 
 			$result = Database::server($this->server)
 				->query($this->lastSql = $sql, $this->bindings)
-				->count();
+				->field();
 
 			return !empty($result);
 		}
