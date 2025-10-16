@@ -111,29 +111,6 @@
 		}
 
 		/**
-		 * Fetches the row data from the database and caches it.
-		 *
-		 * @return void
-		 */
-		private function initializeData(): void
-		{
-			if ($this->cachedData) {
-				return;
-			}
-
-			$obj = new Eloquent($this->server);
-			$obj->table($this->table);
-			$obj->where($this->primaryKey, $this->id);
-			$obj->limit(1);
-
-			foreach ($obj->row() as $key => $value) {
-				$this->data[$key] = $value;
-			}
-
-			$this->cachedData = true;
-		}
-
-		/**
 		 *  Check whether the database row exists.
 		 *
 		 *  This method verifies if the queried record actually exists in the database.
@@ -170,7 +147,18 @@
 		 */
 		public function data(): array
 		{
-			$this->initializeData();
+			if (!$this->cachedData) {
+				$obj = new Eloquent($this->server);
+				$obj->table($this->table);
+				$obj->where($this->primaryKey, $this->id);
+				$obj->limit(1);
+
+				foreach ($obj->row() as $key => $value) {
+					$this->data[$key] = $value;
+				}
+			}
+
+			$this->cachedData = true;
 			return $this->data;
 		}
 
@@ -188,7 +176,14 @@
 		 */
 		public function __get(string $name)
 		{
-			$this->initializeData();
+			if (!isset($this->data[$name])) {
+				$obj = new Eloquent($this->server);
+				$obj->table($this->table);
+				$obj->select($name);
+				$obj->where($this->primaryKey, $this->id);
+				$this->data[$name] = $obj->field();
+			}
+
 			return $this->data[$name] ?? null;
 		}
 	}
