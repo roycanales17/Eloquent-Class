@@ -26,6 +26,8 @@
 
 		/**
 		 * Fetch a MetaData wrapper by primary key.
+		 *
+		 * @param int $id Primary key value.
 		 */
 		public static function _(int $id): MetaData
 		{
@@ -33,7 +35,7 @@
 			$primaryKey = $instance->primary_key;
 			$table = self::baseTable($instance);
 
-			return MetaData::instance($id, $table, $primaryKey);
+			return MetaData::instance($id, $table, $primaryKey, $instance->server ?: 'master');
 		}
 
 		/**
@@ -62,7 +64,7 @@
 			$obj->table(self::baseTable($instance));
 
 			if (!empty($instance->primary_key)) {
-				$obj->where($instance->primary_key, '=', $id);
+				$obj->where($instance->primary_key, $id);
 				return $obj->row();
 			}
 
