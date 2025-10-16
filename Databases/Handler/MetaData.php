@@ -55,6 +55,13 @@
 		private int $id;
 
 		/**
+		 * Table column primary key.
+		 *
+		 * @var string
+		 */
+		private string $primaryKey;
+
+		/**
 		 * Get (or create) a cached instance for the given table and ID.
 		 *
 		 * @param int $id The primary key value.
@@ -85,6 +92,7 @@
 		{
 			$this->id = $id;
 			$this->table = strtolower($table);
+			$this->primaryKey = $primaryKey;
 
 			$data = Database::table($this->table)
 				->where($primaryKey, '=', $id)
@@ -96,15 +104,32 @@
 			}
 		}
 
+
+		/**
+		 *  Check whether the database row exists.
+		 *
+		 *  This method verifies if the queried record actually exists in the database.
+		 *  It returns `true` if the record was successfully loaded (i.e., `$this->data` is not empty),
+		 *  otherwise returns `false`.
+		 *
+		 * @return bool
+		 */
+		public function isExist(): bool
+		{
+			return !empty($this->data);
+		}
+
 		/**
 		 * Invalidate (refresh) the cached instance for this table + ID.
+		 * Re-fetches the latest data from the database and updates the cache.
 		 *
 		 * @return void
 		 */
 		public function invalidate(): void
 		{
+			$primaryKey = self::$instance[$this->table][$this->id]->primaryKey;
 			unset(self::$instance[$this->table][$this->id]);
-			self::$instance[$this->table][$this->id] = new self($this->id, $this->table);
+			self::$instance[$this->table][$this->id] = new self($this->id, $this->table, $primaryKey);
 		}
 
 		/**
