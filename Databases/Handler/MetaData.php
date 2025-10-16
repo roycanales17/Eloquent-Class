@@ -2,7 +2,7 @@
 
 	namespace App\Databases\Handler;
 
-	use App\Databases\Database;
+	use App\Databases\Eloquent;
 
 	/**
 	 * Class MetaData
@@ -41,6 +41,13 @@
 		private array $data = [];
 
 		/**
+		 * Whether this instance data has been cached.
+		 *
+		 * @var bool
+		 */
+		private bool $cachedData = false;
+
+		/**
 		 * The table name (lowercased).
 		 *
 		 * @var string
@@ -62,18 +69,26 @@
 		private string $primaryKey;
 
 		/**
+		 * Database server.
+		 *
+		 * @var string
+		 */
+		private string $server;
+
+		/**
 		 * Get (or create) a cached instance for the given table and ID.
 		 *
 		 * @param int $id The primary key value.
 		 * @param string $table The table name.
-		 * @param string $primaryKey
+		 * @param string $primaryKey Table column primary key.
+		 * @param string $server Database server.
 		 * @return self
 		 */
-		public static function instance(int $id, string $table, string $primaryKey): self
+		public static function instance(int $id, string $table, string $primaryKey, string $server): self
 		{
 			$table = strtolower($table);
 			if (!isset(self::$instance[$table][$id])) {
-				self::$instance[$table][$id] = new self($id, $table, $primaryKey);
+				self::$instance[$table][$id] = new self($id, $table, $primaryKey, $server);
 			}
 
 			return self::$instance[$table][$id];
@@ -82,28 +97,41 @@
 		/**
 		 * Private constructor.
 		 *
-		 * Fetches the row data from the database and caches it.
-		 *
 		 * @param int    $id    The primary key value.
 		 * @param string $table The table name.
 		 * @param string $primaryKey Table primary key.
+		 * @param string $server Database server.
 		 */
-		private function __construct(int $id, string $table, string $primaryKey)
+		private function __construct(int $id, string $table, string $primaryKey, string $server)
 		{
 			$this->id = $id;
 			$this->table = strtolower($table);
 			$this->primaryKey = $primaryKey;
-
-			$data = Database::table($this->table)
-				->where($primaryKey, '=', $id)
-				->limit(1)
-				->row();
-
-			foreach ($data as $key => $value) {
-				$this->data[$key] = $value;
-			}
+			$this->server = $server;
 		}
 
+		/**
+		 * Fetches the row data from the database and caches it.
+		 *
+		 * @return void
+		 */
+		private function initializeData(): void
+		{
+			if ($this->cachedData) {
+				return;
+			}
+
+			$obj = new Eloquent($this->server);
+			$obj->table($this->table);
+			$obj->where($this->primaryKey, $this->id);
+			$obj->limit(1);
+
+			foreach ($obj->row() as $key => $value) {
+				$this->data[$key] = $value;
+			}
+
+			$this->cachedData = true;
+		}
 
 		/**
 		 *  Check whether the database row exists.
@@ -116,7 +144,11 @@
 		 */
 		public function isExist(): bool
 		{
-			return !empty($this->data);
+			$obj = new Eloquent($this->server);
+			$obj->table($this->table);
+			$obj->where($this->primaryKey, $this->id);
+
+			return $obj->exists();
 		}
 
 		/**
@@ -127,9 +159,8 @@
 		 */
 		public function invalidate(): void
 		{
-			$primaryKey = self::$instance[$this->table][$this->id]->primaryKey;
-			unset(self::$instance[$this->table][$this->id]);
-			self::$instance[$this->table][$this->id] = new self($this->id, $this->table, $primaryKey);
+			$this->cachedData = false;
+			$this->data = [];
 		}
 
 		/**
@@ -139,6 +170,7 @@
 		 */
 		public function data(): array
 		{
+			$this->initializeData();
 			return $this->data;
 		}
 
@@ -156,6 +188,7 @@
 		 */
 		public function __get(string $name)
 		{
-			return $this->data[$name] ?? '';
+			$this->initializeData();
+			return $this->data[$name] ?? null;
 		}
 	}
